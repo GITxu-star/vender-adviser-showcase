@@ -41,7 +41,7 @@ export default function Screen4() {
       {/* 这一步的内容只来自右侧 AI（同源），还没问就提示去右边 */}
       <AiStepCardView step={4} />
 
-      {/* 顾客动线演示（3D 版，保留 CustomerFlow 作为 2D fallback） */}
+      {/* 顾客动线演示（3D 版） */}
       <CustomerFlow3D />
 
 
