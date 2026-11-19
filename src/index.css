@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ 全局基础 ============ */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* 春天般的清新渐变背景 */
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(184, 231, 201, 0.55), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(219, 243, 227, 0.6), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 75% 25%, rgba(244, 248, 245, 0.9), transparent 60%),
+    linear-gradient(160deg, #f0faf4 0%, #f8f7f2 50%, #f0faf4 100%);
+  background-attachment: fixed;
+  color: #1d2a22;
+}
+
+/* 全局过渡（柔和） */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 手机输入框数字键盘时隐藏上下箭头 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ============ 装饰性光晕 blob ============ */
+.bg-blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============ 抽屉滑入动画（更顺滑） ============ */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0.8; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slide-in {
+  animation: slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============ 打字机光标 ============ */
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+.typing-cursor::after {
+  content: '▎';
+  color: #2d8a53;
+  margin-left: 1px;
+  animation: blink-cursor 0.9s ease-in-out infinite;
+  font-weight: 300;
+}
+
+/* ============ 步骤条隐藏滚动条 ============ */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ============ 选项按钮统一过渡 ============ */
+.opt-btn {
+  transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.opt-btn:active {
+  transform: scale(0.97);
+}
+
+/* ============ 卡片入场 ============ */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.animate-card-in {
+  animation: card-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============ 渐变背景装饰点 ============ */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50%      { transform: translateY(-8px) translateX(4px); }
+}
+.animate-gentle-float {
+  animation: gentle-float 6s ease-in-out infinite;
+}
+
+/* ============ 按钮 hover 微动 ============ */
+.btn-pop {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
+}
+.btn-pop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px -10px rgba(45, 138, 83, 0.45);
+}
+.btn-pop:active {
+  transform: translateY(0);
+}
+
+/* ============ 滚动条美化 ============ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(45, 138, 83, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 138, 83, 0.35);
+}
+
+/* ============ 选中文本颜色 ============ */
+::selection {
+  background: rgba(45, 138, 83, 0.18);
+  color: inherit;
+}
