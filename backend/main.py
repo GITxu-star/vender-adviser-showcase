@@ -435,6 +435,8 @@ async def visualize_api(req: VisualizeRequest):
         (('花',), '鲜切花 10元3支'),
         (('水果',), '新鲜水果'),
         (('手机', '贴膜'), '手机贴膜'),
+        (('五金', '螺丝', '扳手', '水龙头', '锁具', '工具'), '五金工具 全规格'),
+        (('电子', '数据线', '充电器', '耳机', '充电宝', '数码'), '数码配件 现场试'),
     ]
     sign_text = ''
     for kws, txt in sign_map:
@@ -461,14 +463,16 @@ async def visualize_api(req: VisualizeRequest):
         '生鲜果蔬': ['🥥', '🍉', '🍓', '🍎', '🍊'],
         '坚果炒货': ['🌰', '🥜'],
         '便民服务': ['📱', '🔑'],
-        '日用百货': ['🧦', '🧸', '🧲'],
+        '五金工具': ['🔧', '🔩', '🪛'],
+        '电子数码': ['🔌', '🎧', '🔋'],
+        '日用百货': ['👕', '🧦', '🧸'],
         '文创手工': ['🧲', '🎨', '🪀'],
         '植物类': ['🌸', '🪴'],
         '宠物用品': ['🐾', '🐟'],
     }
     icons = icon_by_group.get(cat_group, ['🍢', '🥤', '🍡'] if sells_food else ['🧺', '🎁', '🧸'])
-    if not sells_food and cat_group not in ('便民服务', '日用百货', '文创手工', '植物类', '宠物用品', '唱片音像'):
-        icons = ['🥣', '🧺', '🎁']   # 卖原料（面粉/粮油）不套成品餐食图标
+    if not sells_food and cat_group not in icon_by_group:
+        icons = ['🧺', '🎁', '🧲']   # 未识别品类（如原料）用中性图标，不套成品餐食
     if cat_group == '街头表演-唱歌':
         icons = ['🎤', '🎸', '🎧']
     elif cat_group == '街头表演-杂技':
@@ -481,6 +485,7 @@ async def visualize_api(req: VisualizeRequest):
         '早餐面点': 'snack', '快餐主食': 'bowl', '饮品': 'cup',
         '甜品烘焙': 'box', '生鲜果蔬': 'fruit', '坚果炒货': 'snack',
         '便民服务': 'service', '日用百货': 'box', '文创手工': 'craft',
+        '五金工具': 'box', '电子数码': 'box',
         '植物类': 'plant', '宠物用品': 'box',
         '街头表演-唱歌': 'craft', '街头表演-杂技': 'craft', '唱片音像': 'box',
     }
