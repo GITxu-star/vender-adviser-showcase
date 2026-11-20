@@ -36,7 +36,7 @@ function normalizeItem(it: any): string {
 /** 从卡片里抽出这一屏的全部真实动作（过滤占位文案） */
 export function extractCardPlan(card?: StepCard | null): string[] {
   if (!card) return [];
-  const sec = (card.sections || []).find(s => /今晚|动作|要做|执行清单/.test(s.title || ''));
+  const sec = (card.sections || []).find(s => /今天|动作|要做|执行清单/.test(s.title || ''));
   const fromSection = (sec?.items || [])
     .map(normalizeItem)
     .map(s => s.trim())
@@ -48,7 +48,7 @@ export function extractCardPlan(card?: StepCard | null): string[] {
 }
 
 /**
- * 从卡片里抽出「今晚就做这一件」的具体动作。
+ * 从卡片里抽出「今天就做这一件」的具体动作。
  * 屏 7 回溯、prev_solution 同步都用它，避免退回写死模板。
  */
 export function extractCardAction(card?: StepCard | null): string {

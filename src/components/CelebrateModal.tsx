@@ -51,7 +51,7 @@ export function CelebrateModal({ open, session, onPrimary, onContinue }: Props) 
   }
   if (solution?.doWhat) {
     items.push({
-      icon: '🎯', label: '今晚要做',
+      icon: '🎯', label: '今天要做',
       value: solution.doWhat,
       color: 'from-rose-400 to-rose-500',
     });

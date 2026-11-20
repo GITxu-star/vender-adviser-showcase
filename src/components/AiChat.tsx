@@ -37,7 +37,7 @@ const STEP_HARVEST: Record<number, { title: string; harvest: string[] }> = {
     harvest: ['AI 告诉你最该改什么', '给你多个方向的具体建议'],
   },
   4: {
-    title: '第 4 步 · 今晚就做',
+    title: '第 4 步 · 今天就做',
     harvest: ['一个具体到动作的方案', '成本 + 退路都算好'],
   },
   5: {
@@ -46,7 +46,7 @@ const STEP_HARVEST: Record<number, { title: string; harvest: string[] }> = {
   },
   6: {
     title: '第 6 步 · 打卡',
-    harvest: ['今晚做完记一笔', '明天回来看结果'],
+    harvest: ['今天做完记一笔', '明天回来看结果'],
   },
   7: {
     title: '第 7 步 · 回来看',

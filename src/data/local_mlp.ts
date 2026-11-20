@@ -194,9 +194,9 @@ function step4(s: SessionData, f: Record<string, string>): StepCard {
   return {
     card_type: 'solution_crafted', step: 4,
     title: '方案加工', emoji: '📦',
-    summary: `今晚花${cost}，${time}做完`,
+    summary: `今天花${cost}，${time}做完`,
     sections: [
-      { title: '今晚就做这一件', type: 'list', items: actions },
+      { title: '今天就做这一件', type: 'list', items: actions },
       { title: '成本预估', type: 'kv', items: [['花费', cost], ['耗时', time], ['退路', '大不了收摊，没库存风险']] },
     ],
     tags: actions.slice(0,2), knowledge_refs: [],

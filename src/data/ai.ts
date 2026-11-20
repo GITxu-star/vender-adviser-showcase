@@ -36,7 +36,7 @@ export function generateJudgment(d: SessionData): AiJudgment {
   // 怎么解决
   let howToFix = '';
   if (mainProblem.includes('注意不到')) {
-    howToFix = '把「一眼看明白你卖什么」的视觉信号放大 3 倍——招牌、实物展示、价格牌，今晚就能动起来';
+    howToFix = '把「一眼看明白你卖什么」的视觉信号放大 3 倍——招牌、实物展示、价格牌，今天就能动起来';
   } else if (mainProblem.includes('价格')) {
     howToFix = '价格不变，但让顾客觉得「值」——把食材、做法、份量摆出来说清楚';
   } else {
@@ -99,7 +99,7 @@ export function generateSolution(d: SessionData): AiSolution {
 // 屏 5：给一句能数得出来的话
 export function generateMeasureTip(d: SessionData): string {
   const j = d.judgment;
-  if (!j) return '看看今晚顾客是不是停下来了';
+  if (!j) return '看看今天顾客是不是停下来了';
 
   const p = j.mainProblem;
 
@@ -119,7 +119,7 @@ export function regenerateJudgment(d: SessionData, reason: string): AiJudgment {
   const prefixMap: Record<string, string> = {
     '不是这个问题': '换个方向——也许核心问题根本不是这个。',
     '太贵了': '那先不花钱，换一个零成本的方向。',
-    '做不到': '好，收一收，来一个你今晚一定能做成的。',
+    '做不到': '好，收一收，来一个你今天一定能做成的。',
     '看不懂': '说人话版本——',
   };
   const prefix = prefixMap[reason] || '换一个角度——';

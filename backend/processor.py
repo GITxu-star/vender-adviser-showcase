@@ -59,9 +59,9 @@ class StepCard:
 _NEXT_STEP_HINT = {
     1: '⬇️ 下一步：告诉我顾客走到你摊前一般做什么、看什么、问什么，我就能从「你卖什么」推到「他为什么不买」。',
     2: '⬇️ 下一步：进入第 3 步，我把问题到底卡在哪一环给你诊断出来。',
-    3: '➡️ 下一步：进入第 4 步，我给你今晚就能动手改的那一件具体事。',
+    3: '➡️ 下一步：进入第 4 步，我给你今天就能动手改的那一件具体事。',
     4: '➡️ 下一步：进入第 5 步，定 2-3 个明天就能数的指标，做完才知道有没有用。',
-    5: '➡️ 下一步：进入第 6 步，把方案拆成今晚能一条条勾掉的执行清单。',
+    5: '➡️ 下一步：进入第 6 步，把方案拆成今天能一条条勾掉的执行清单。',
     6: '➡️ 下一步：进入第 7 步，做完我们复盘一次，看效果到没到位。',
     7: '✅ 这一轮走完了。想再优化就回第 1 步改问卷，我按新信息重新判断。',
 }
@@ -620,7 +620,7 @@ def _process_step1(ctx: SessionContext, features: Dict[str, Any], temperatures=N
       step 1 → "你是谁"（品类定位 + 基础画像）→ 温和提示下一步
       step 2 → "顾客怎么反应"（顾客行为图谱）
       step 3 → "问题在哪"（视觉/陈列诊断）
-      step 4 → "今晚就能做的事"（动线+摆法具体方案）
+      step 4 → "今天就能做的事"（动线+摆法具体方案）
     """
     rag_chunks = rag_retrieve(f"{features.get('category_kw', '')} {features.get('location', '')} 经营要点", top_k=2)
     chunk_dicts = [{'text': c.content, 'score': c.score, 'source': c.source} for c in rag_chunks]
@@ -975,12 +975,12 @@ def _process_step4(ctx: SessionContext, features: Dict[str, Any], temperatures=N
     msg = getattr(ctx, 'user_message', '') or ''
     simplify_intent = any(k in msg for k in ('太难', '砍简', '简化', '简单点', '太复杂', '做不了'))
     if simplify_intent and solution:
-        actions = [actions[0], '其他都先别管——今晚只做这一件']
+        actions = [actions[0], '其他都先别管——今天只做这一件']
         cost_guess, time_guess = '0-10 元', '10-15 分钟'
 
     sections = [
         {
-            'title': '今晚就做这一件',
+            'title': '今天就做这一件',
             'type': 'list',
             'items': actions
         },
@@ -1003,7 +1003,7 @@ def _process_step4(ctx: SessionContext, features: Dict[str, Any], temperatures=N
     return StepCard(
         card_type=CardType.SOLUTION_CRAFTED.value,
         step=4, title='方案加工', emoji='📦',
-        summary=f"今晚花{cost_guess}，{time_guess}做完",
+        summary=f"今天花{cost_guess}，{time_guess}做完",
         sections=sections,
         knowledge_refs=[c.get('source', '') for c in chunk_dicts if c.get('score', 0) > 0.3][:2],
     )
@@ -1130,7 +1130,7 @@ def _metric_trio(cat: str) -> List[Tuple[str, str, str]]:
 
 
 def _measure_targets(ctx: SessionContext, features: Dict[str, Any]) -> Dict[str, Any]:
-    """按竞争 / 点位 / 天气，算出这摊今晚的"及格线"（不是一套放之四海皆准的数）。"""
+    """按竞争 / 点位 / 天气，算出这摊今天的"及格线"（不是一套放之四海皆准的数）。"""
     comp = ctx.competitors or ''
     spot = ctx.spot_type or ''
     venue = ctx.weather or ''
@@ -1195,7 +1195,7 @@ def _measure_targets(ctx: SessionContext, features: Dict[str, Any]) -> Dict[str,
         else:
             weather_lines.append('露天·晴天：按上面的数正常执行；突然下雨就别追路过人数，只看有没有人主动问价')
     if night:
-        weather_lines.append('夜市遇雨会提前散场：收摊比平时早 30-60 分钟，今晚备货按七成准备')
+        weather_lines.append('夜市遇雨会提前散场：收摊比平时早 30-60 分钟，今天备货按七成准备')
     weather_lines.append('天气突变时，先重新数 5 分钟路过人数，按新基数重算，别拿昨天的数对比')
 
     return {
@@ -1331,7 +1331,7 @@ def _process_step7(ctx: SessionContext, features: Dict[str, Any], temperatures=N
         verdict = '有点用但没到位，加大执行强度'
         logic = [
             '变化不大但方向没跑偏 → 多半是执行力度或位置差了一口气',
-            '今晚只改一件事：提前 30 分钟摆好、把主推往前再推 20cm、价格牌放大一号',
+            '今天只改一件事：提前 30 分钟摆好、把主推往前再推 20cm、价格牌放大一号',
             '明天只数一个数：停下的人有没有比今天再多 2 个；有就继续，没有就换方向',
         ]
     elif eff == 'none':

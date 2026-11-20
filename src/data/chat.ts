@@ -38,14 +38,14 @@ export function chatReply(userMsg: string, session: SessionData): string {
   }
 
   // 问方案
-  if (/怎么做|具体做|方案|今晚做/.test(msg)) {
+  if (/怎么做|具体做|方案|今天做/.test(msg)) {
     if (session.solution) {
-      return `今晚就做这个：\n\n${session.solution.doWhat}\n\n花费：${session.solution.costAndTime}\n退路：${session.solution.revertPlan}`;
+      return `今天就做这个：\n\n${session.solution.doWhat}\n\n花费：${session.solution.costAndTime}\n退路：${session.solution.revertPlan}`;
     }
     const now = s2.customerAction
       ? `现在已看到「顾客${s2.customerAction}」——问题大概卡在"停下/问价"这一段。`
       : '现在还没看到顾客走到摊前是什么反应。';
-    return `${now}\n\n顺着这条链走：第 3 步我给诊断（卡在哪一环），第 4 步才给今晚能动手的那一件具体事。`;
+    return `${now}\n\n顺着这条链走：第 3 步我给诊断（卡在哪一环），第 4 步才给今天能动手的那一件具体事。`;
   }
 
   // 抱怨 / 诉苦
@@ -76,7 +76,7 @@ export function chatReply(userMsg: string, session: SessionData): string {
 
   const generic = [
     '说说看，你现在最愁的是什么？',
-    '或者你也可以问我：「我该先改什么？」「给我个今晚能做的事」。',
+    '或者你也可以问我：「我该先改什么？」「给我个今天能做的事」。',
     '别客气，随便聊。',
   ][Math.floor(Math.random() * 3)];
 
@@ -88,7 +88,7 @@ function progressHint(s: SessionData): string {
     1: '填左边的基本情况（卖什么、在哪卖、卖多少）',
     2: '选顾客的反应——单选 + 多选',
     3: '看 AI 判断对不对，认了就下一步',
-    4: '挑今晚要做的一件事',
+    4: '挑今天要做的一件事',
     5: '记住明天怎么看效果',
     6: '点一下「我做完了」',
     7: '回来看结果，闭环',

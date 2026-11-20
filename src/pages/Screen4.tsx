@@ -27,14 +27,14 @@ export default function Screen4() {
     // 真正让 AI 重出一版更简单的方案（右侧回答 + 左侧卡片同步刷新）
     // 先把步骤锁回第 4 步：从第 5 步返回时 screenNum 还是 5，AI 会误答成第 5 步
     update('screenNum', 4);
-    triggerAi('只改第 4 步的方案：太难了，砍到今晚 10 分钟就能做完的一步，其他都先别管，成本尽量 0。不要进入第 5 步，也不要给测量指标。');
+    triggerAi('只改第 4 步的方案：太难了，砍到今天 10 分钟就能做完的一步，其他都先别管，成本尽量 0。不要进入第 5 步，也不要给测量指标。');
   };
 
   return (
     <div className="space-y-6">
       <ScreenHeader
-        title="今晚就能做的一版"
-        subtitle="挑一件，今晚就动手——别多做，就做一件。"
+        title="今天就能做的一版"
+        subtitle="挑一件，今天就动手——别多做，就做一件。"
         aiHint="方案越简单越好，能 15 分钟搞定的就别搞 2 小时的。"
       />
 
@@ -47,7 +47,7 @@ export default function Screen4() {
 
       <div className="space-y-3 pt-4">
         <BigButton onClick={next}>
-          今晚就做这个 →
+          今天就做这个 →
         </BigButton>
         <button
           type="button"

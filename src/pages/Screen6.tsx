@@ -18,7 +18,7 @@ export default function Screen6() {
     <div className="space-y-6">
       <ScreenHeader
         title="记一笔"
-        subtitle="把你今晚要做的事存着——做完点一下，明天回来看。"
+        subtitle="把你今天要做的事存着——做完点一下，明天回来看。"
         aiHint="这个按钮相当于你的打卡器，做完一定要点，明天才能闭环。"
       />
 
