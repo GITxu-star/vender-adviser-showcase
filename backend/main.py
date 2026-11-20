@@ -50,38 +50,13 @@ _ensure_vector_db()
 # ============ FastAPI App ============
 app = FastAPI(title='地摊顾问 RAG Backend', version='0.2.0')
 
-# 访问控制：设置 ACCESS_CODE 后，/api/* 必须带 X-Access-Code 头（公开部署防额度被刷）
-# 同一 IP 5 分钟内输错 8 次 → 429，防止公网地址被暴力枚举访问码
-_FAIL_WINDOW = 300
-_FAIL_LIMIT = 8
-_fail_log: dict = defaultdict(list)
-
-
-def _client_ip(request) -> str:
-    fwd = request.headers.get('x-forwarded-for', '')
-    if fwd:
-        return fwd.split(',')[0].strip()
-    return request.client.host if request.client else 'unknown'
-
-
+# 访问控制：设置 ACCESS_CODE 后，/api/* 必须带 X-Access-Code 头
 @app.middleware('http')
 async def access_guard(request, call_next):
     code = settings.ACCESS_CODE
     if code and request.url.path.startswith('/api/'):
-        ip = _client_ip(request)
-        now = time.time()
-        hits = [t for t in _fail_log.get(ip, []) if now - t < _FAIL_WINDOW]
-        if len(hits) >= _FAIL_LIMIT:
-            _fail_log[ip] = hits
-            return JSONResponse({'detail': '访问码错误次数过多，请 5 分钟后再试'}, status_code=429)
         if not hmac.compare_digest(request.headers.get('x-access-code', ''), code):
-            hits.append(now)
-            _fail_log[ip] = hits
-            if len(_fail_log) > 2000:      # 防止内存无限增长
-                _fail_log.clear()
-                _fail_log[ip] = hits
             return JSONResponse({'detail': '访问码不正确'}, status_code=401)
-        _fail_log.pop(ip, None)
     return await call_next(request)
 
 
