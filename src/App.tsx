@@ -11,10 +11,8 @@ import Screen7 from './pages/Screen7';
 import History from './pages/History';
 import { useStore } from './store/useStore';
 import AiChat, { triggerAi } from './components/AiChat';
-import AiDrawer from './components/AiDrawer';
 import AiSheet from './components/AiSheet';
 import { AccessGate } from './components/AccessGate';
-import Fab from './components/Fab';
 import StepIndicator from './components/StepIndicator';
 
 const SCREEN_MAP: Record<number, React.FC> = {
@@ -96,7 +94,6 @@ function ScreenRoute() {
 // ============ Shell：唯一的 BrowserRouter 子组件（只 mount 一次） ============
 function Shell() {
   const location = useLocation();
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const isMobile = useIsMobile();
   const isHome = !location.pathname.startsWith('/screen/');
@@ -134,9 +131,6 @@ function Shell() {
         <AiSheet expanded={sheetExpanded} onExpandedChange={setSheetExpanded} hint={hint} />
       )}
 
-      {/* ============ 桌面端：FAB + 全屏抽屉（保持不变） ============ */}
-      {!isMobile && <Fab onClick={() => setDrawerOpen(true)} />}
-      {!isMobile && <AiDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
     </div>
   );
 }
