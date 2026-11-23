@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BigButton } from '../components/BigButton';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -32,6 +32,8 @@ export default function Screen7() {
   const [sharedCase, setSharedCase] = useState<null | { title: string; text: string }>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareMissed, setShareMissed] = useState(false);
+  // 分享载荷快照：在「完成」那一刻固化下来，避免后续清空会话导致空数据被后端拒收
+  const shareSnapRef = useRef<any>(null);
 
   // 本轮收尾：先问一次匿名分享，再走原来的去向
   const finishRound = () => {
@@ -46,6 +48,16 @@ export default function Screen7() {
 
   const agreeShare = async () => {
     const st = useStore.getState();
+    const snap = shareSnapRef.current;
+    const src = snap || {
+      sell_what: st.screen1.sellWhat,
+      where_sell: st.screen1.whereSell,
+      competitors: st.screen1.competitors,
+      my_difficulty: st.screen1.myDifficulty,
+      effect: st.effect,
+      judgment: st.judgment,
+      solution: st.solution,
+    };
     const base = (import.meta as any).env?.VITE_API_BASE || '/api';
     setShareLoading(true);
     try {
@@ -53,13 +65,13 @@ export default function Screen7() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sell_what: st.screen1.sellWhat,
-          where_sell: st.screen1.whereSell,
-          competitors: st.screen1.competitors,
-          my_difficulty: st.screen1.myDifficulty,
-          effect: st.effect,
-          judgment: st.judgment,
-          solution: st.solution,
+          sell_what: src.sell_what,
+          where_sell: src.where_sell,
+          competitors: src.competitors,
+          my_difficulty: src.my_difficulty,
+          effect: src.effect,
+          judgment: src.judgment,
+          solution: src.solution,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -80,6 +92,16 @@ export default function Screen7() {
 
   const done = () => {
     if (!effect) return;
+    const st0 = useStore.getState();
+    shareSnapRef.current = {
+      sell_what: st0.screen1.sellWhat,
+      where_sell: st0.screen1.whereSell,
+      competitors: st0.screen1.competitors,
+      my_difficulty: st0.screen1.myDifficulty,
+      effect: st0.effect,
+      judgment: st0.judgment,
+      solution: st0.solution,
+    };
     // 这一轮结束：先存档，历史记录里能翻到
     saveRound(useStore.getState());
     setModalOpen(true);

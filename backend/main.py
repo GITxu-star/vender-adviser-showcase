@@ -168,7 +168,8 @@ async def submit_share(payload: Dict[str, Any]):
         'do_what': _cut(sol.get('doWhat')),
         'cost_and_time': _cut(sol.get('costAndTime')),
     }
-    if not record['main_problem'] and not record['do_what']:
+    # 只要带了品类就收：参考案例只依赖品类，判断/方案缺失不算无效分享
+    if not record['main_problem'] and not record['do_what'] and not record['sell_what']:
         return JSONResponse({'ok': False, 'error': 'empty share'}, status_code=400)
 
     try:
