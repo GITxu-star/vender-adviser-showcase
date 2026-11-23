@@ -1073,10 +1073,6 @@ export default function CustomerFlow3D() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ============ 2D 微调（兜底，让 3D 场景的摊位能移动）============
-  const nudge = (dx: number) =>
-    setStall2D(s => ({ ...s, x: clamp(s.x + dx, 28, 372) }));
-
   // ============ 结论（复用 2D 逻辑）============
   const actions: Array<{ tone: 'good' | 'warn' | 'bad'; title: string; detail: string }> = [];
   if (analysis.offset > 0) {
@@ -1138,16 +1134,6 @@ export default function CustomerFlow3D() {
         <div className="absolute bottom-2 right-2 text-[10px] text-gray-500 bg-white/70 px-2 py-0.5 rounded">
           🖱 左键旋转 · 滚轮缩放
         </div>
-      </div>
-
-      {/* 摊位微调 */}
-      <div className="mt-2 flex items-center justify-center gap-2">
-        <button type="button" onClick={() => nudge(-12)} className="text-[11.5px] px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition">
-          ← 摊位往左
-        </button>
-        <button type="button" onClick={() => nudge(12)} className="text-[11.5px] px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition">
-          摊位往右 →
-        </button>
       </div>
 
       {/* 结论 */}
