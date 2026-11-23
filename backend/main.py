@@ -179,7 +179,33 @@ async def submit_share(payload: Dict[str, Any]):
     except Exception as e:
         return JSONResponse({'ok': False, 'error': str(e)}, status_code=500)
 
-    return {'ok': True}
+    # 愿意分享 → 回一条同行业的脱敏参考案例（只用于本次展示，不入库）
+    reference = None
+    try:
+        import re as _re
+        from pipeline import SessionContext, _retrieve_similar_case
+        ctx = SessionContext(
+            sell_what=record['sell_what'],
+            where_sell=str(p.get('where_sell') or '')[:40],
+            competitors=str(p.get('competitors') or '')[:40],
+            my_difficulty=str(p.get('my_difficulty') or '')[:60],
+        )
+        found = _retrieve_similar_case(ctx)
+        if found and found.get('case_text'):
+            text = str(found.get('case_text') or '')
+            text = _re.sub(r'1[3-9]\d{9}|\d{3,4}-\d{7,8}', '', text)
+            text = text[:400]
+            cut = text.rfind('。')
+            if cut >= 120:
+                text = text[:cut + 1]
+            reference = {
+                'title': str(found.get('title') or '同行业案例')[:40],
+                'text': text,
+            }
+    except Exception as e:
+        print(f'[share] 参考案例检索失败（不影响提交）: {e}')
+
+    return {'ok': True, 'reference': reference}
 
 
 @app.post('/api/chat', response_model=ChatResponse)

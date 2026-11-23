@@ -29,12 +29,14 @@ export default function Screen7() {
   const [modalOpen, setModalOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [afterShare, setAfterShare] = useState<null | (() => void)>(null);
+  const [sharedCase, setSharedCase] = useState<null | { title: string; text: string }>(null);
 
   // 本轮收尾：先问一次匿名分享，再走原来的去向
   const finishRound = () => {
     const cb = afterShare;
     setAfterShare(null);
     setShareOpen(false);
+    setSharedCase(null);
     if (cb) cb();
   };
 
@@ -42,16 +44,25 @@ export default function Screen7() {
     const st = useStore.getState();
     const base = (import.meta as any).env?.VITE_API_BASE || '/api';
     try {
-      await fetch(`${base}/share`, {
+      const res = await fetch(`${base}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sell_what: st.screen1.sellWhat,
+          where_sell: st.screen1.whereSell,
+          competitors: st.screen1.competitors,
+          my_difficulty: st.screen1.myDifficulty,
           effect: st.effect,
           judgment: st.judgment,
           solution: st.solution,
         }),
       });
+      const data = await res.json().catch(() => null);
+      const ref = data && data.reference;
+      if (ref && ref.text) {
+        setSharedCase({ title: ref.title || '同行业案例', text: ref.text });
+        return;
+      }
     } catch { /* 分享失败不影响流程 */ }
     finishRound();
   };
@@ -169,12 +180,22 @@ export default function Screen7() {
         }}
       />
 
-      {shareOpen && <SharePrompt onAgree={agreeShare} onSkip={finishRound} />}
+      {shareOpen && (
+        <SharePrompt
+          caseRef={sharedCase}
+          onAgree={agreeShare}
+          onSkip={finishRound}
+          onClose={finishRound}
+        />
+      )}
     </div>
   );
 }
 
-function SharePrompt({ onAgree, onSkip }: { onAgree: () => void; onSkip: () => void }) {
+function SharePrompt({ caseRef, onAgree, onSkip, onClose }: {
+  caseRef: { title: string; text: string } | null;
+  onAgree: () => void; onSkip: () => void; onClose: () => void;
+}) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
@@ -187,29 +208,52 @@ function SharePrompt({ onAgree, onSkip }: { onAgree: () => void; onSkip: () => v
         }}
         className="p-5"
       >
-        <div className="text-[15px] font-bold text-gray-900">愿意匿名分享这次诊断吗？</div>
-        <p className="mt-2 text-[13px] text-gray-600 leading-relaxed">
-          只提交这次的品类、诊断结论和方案，<b>不含对话记录、不含身份信息</b>，
-          用来积累更多摊位案例。不分享也完全不影响使用。
-        </p>
-        <div className="mt-4 grid gap-2">
-          <button
-            type="button"
-            onClick={onAgree}
-            style={{ backgroundImage: 'linear-gradient(to bottom right, #1f7a44, #176338)', color: '#fff' }}
-            className="w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
-          >
-            愿意匿名分享
-          </button>
-          <button
-            type="button"
-            onClick={onSkip}
-            style={{ background: '#f3f4f6', color: '#4b5563' }}
-            className="w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
-          >
-            不用，继续使用
-          </button>
-        </div>
+        {caseRef ? (
+          <>
+            <div className="text-[15px] font-bold text-gray-900">给你一条同行业的脱敏参考案例</div>
+            <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-3 max-h-56 overflow-y-auto">
+              <div className="text-[12px] font-bold text-mint-700 mb-1">{caseRef.title}</div>
+              <p className="text-[12.5px] text-gray-600 leading-relaxed whitespace-pre-line">{caseRef.text}</p>
+            </div>
+            <p className="mt-2 text-[11px] text-gray-400">
+              案例已去掉店名、地址和联系方式，只保留做法与结果。
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ backgroundImage: 'linear-gradient(to bottom right, #1f7a44, #176338)', color: '#fff' }}
+              className="mt-4 w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
+            >
+              继续 →
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="text-[15px] font-bold text-gray-900">愿意匿名分享这次诊断吗？</div>
+            <p className="mt-2 text-[13px] text-gray-600 leading-relaxed">
+              只提交这次的品类、诊断结论和方案，<b>不含对话记录、不含身份信息</b>，
+              用来积累更多摊位案例。同意的话，会顺便给你看一条同行业的脱敏参考案例。
+            </p>
+            <div className="mt-4 grid gap-2">
+              <button
+                type="button"
+                onClick={onAgree}
+                style={{ backgroundImage: 'linear-gradient(to bottom right, #1f7a44, #176338)', color: '#fff' }}
+                className="w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
+              >
+                愿意匿名分享
+              </button>
+              <button
+                type="button"
+                onClick={onSkip}
+                style={{ background: '#f3f4f6', color: '#4b5563' }}
+                className="w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
+              >
+                不用，继续使用
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
