@@ -187,6 +187,7 @@ export default function Screen7() {
           setAfterShare(() => () => continueRound());
           setShareOpen(true);
         }}
+        onClose={() => setModalOpen(false)}
       />
 
       {shareOpen && (

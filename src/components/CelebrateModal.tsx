@@ -11,9 +11,11 @@ interface Props {
   onPrimary: () => void;
   /** 保留本轮对话记录，继续开下一轮 */
   onContinue?: () => void;
+  /** 关闭弹窗，留在当前页 */
+  onClose?: () => void;
 }
 
-export function CelebrateModal({ open, session, onPrimary, onContinue }: Props) {
+export function CelebrateModal({ open, session, onPrimary, onContinue, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -102,9 +104,20 @@ export function CelebrateModal({ open, session, onPrimary, onContinue }: Props) 
   const title = isWin ? '恭喜你！闭环完成 ✨' : '换个方向，重新来';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-card-in">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 pt-16 pb-24 animate-card-in">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-float border border-mint-100 overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-float border border-mint-100 overflow-hidden max-h-[calc(100dvh-160px)] flex flex-col">
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="关闭"
+            style={{ background: 'rgba(255,255,255,0.9)', color: '#4b5563' }}
+            className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full flex items-center justify-center text-[14px] font-bold shadow-sm active:scale-95 transition"
+          >
+            ✕
+          </button>
+        )}
         {/* 渐变顶部 + emoji */}
         <div className={`h-28 bg-gradient-to-br ${gradientTop} flex items-center justify-center relative overflow-hidden flex-shrink-0`}>
           {/* 装饰性小圆点 */}
