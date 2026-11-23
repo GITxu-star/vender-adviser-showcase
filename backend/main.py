@@ -180,6 +180,50 @@ async def submit_share(payload: Dict[str, Any]):
         return JSONResponse({'ok': False, 'error': str(e)}, status_code=500)
 
     # 愿意分享 → 回一条同行业的脱敏参考案例（只用于本次展示，不入库）
+    def _grams(s: str) -> set:
+        s = (s or '').strip()
+        out = {s} if len(s) >= 2 else set()
+        for i in range(len(s) - 1):
+            out.add(s[i:i + 2])
+        return {g for g in out if len(g) >= 2}
+
+    def _cat_keywords(sell: str) -> list:
+        try:
+            from processor import _CATEGORY_GROUPS
+            for entry in _CATEGORY_GROUPS:
+                if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                    kws = entry[0]
+                    if isinstance(kws, str):
+                        kws = [kws]
+                    if any(k in sell for k in kws):
+                        return [k for k in kws if len(k) >= 2] or list(kws)
+        except Exception as e:
+            print(f'[share] 品类表不可用: {e}')
+        return []
+
+    def _same_industry(sell: str, title: str) -> bool:
+        kws = _cat_keywords(sell)
+        if kws:
+            return any(k in (title or '') for k in kws)
+        return any(g in (title or '') for g in _grams(sell))
+
+    def _clean(body: str) -> str:
+        import re as _rc
+        lines = []
+        for raw_line in (body or '').splitlines():
+            line = raw_line.strip().lstrip('#').strip()
+            if not line or line.startswith(('>', '---', '|')):
+                continue
+            if _rc.match(r'^(source|tags?|title|category|date|updated|author|license)\s*[:：]', line, _rc.I):
+                continue
+            lines.append(line)
+        text = '\n'.join(lines)
+        text = _rc.sub(r'1[3-9]\d{9}|\d{3,4}-\d{7,8}', '', text)[:400]
+        cut = text.rfind('。')
+        if cut >= 120:
+            text = text[:cut + 1]
+        return text
+
     reference = None
     try:
         import re as _re
@@ -192,18 +236,33 @@ async def submit_share(payload: Dict[str, Any]):
         )
         found = _retrieve_similar_case(ctx)
         if found and found.get('case_text'):
-            text = str(found.get('case_text') or '')
-            text = _re.sub(r'1[3-9]\d{9}|\d{3,4}-\d{7,8}', '', text)
-            text = text[:400]
-            cut = text.rfind('。')
-            if cut >= 120:
-                text = text[:cut + 1]
-            reference = {
-                'title': str(found.get('title') or '同行业案例')[:40],
-                'text': text,
-            }
+            raw = str(found.get('case_text') or '')
+            title = str(found.get('title') or '')
+            # 行业不对就不给，宁缺毋滥
+            if _same_industry(record['sell_what'], title):
+                reference = {'title': (title or '同行业案例')[:40], 'text': _clean(raw)}
     except Exception as e:
         print(f'[share] 参考案例检索失败（不影响提交）: {e}')
+
+    # 兜底：直接在本行业案例文件里找，文件名必须命中同品类词，找不到就不硬凑
+    if not reference:
+        try:
+            import re as _re2
+            kb = Path(__file__).parent / 'knowledge' / '案例库'
+            kws = _cat_keywords(record['sell_what']) or list(_grams(record['sell_what']))
+            best, best_score = None, 0
+            for fp in (sorted(kb.glob('*.md')) if kb.exists() else []):
+                body = fp.read_text(encoding='utf-8', errors='ignore')
+                score = 3 if any(k in fp.stem for k in kws) else 0
+                if any(k in body[:120] for k in kws):
+                    score += 1
+                if score > best_score:
+                    best, best_score = (fp.stem, body), score
+            if best and best_score >= 1:
+                stem, body = best
+                reference = {'title': stem[:40], 'text': _clean(body)}
+        except Exception as e:
+            print(f'[share] 兜底案例也没找到: {e}')
 
     return {'ok': True, 'reference': reference}
 

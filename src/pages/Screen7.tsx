@@ -30,6 +30,8 @@ export default function Screen7() {
   const [shareOpen, setShareOpen] = useState(false);
   const [afterShare, setAfterShare] = useState<null | (() => void)>(null);
   const [sharedCase, setSharedCase] = useState<null | { title: string; text: string }>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareMissed, setShareMissed] = useState(false);
 
   // 本轮收尾：先问一次匿名分享，再走原来的去向
   const finishRound = () => {
@@ -37,12 +39,15 @@ export default function Screen7() {
     setAfterShare(null);
     setShareOpen(false);
     setSharedCase(null);
+    setShareLoading(false);
+    setShareMissed(false);
     if (cb) cb();
   };
 
   const agreeShare = async () => {
     const st = useStore.getState();
     const base = (import.meta as any).env?.VITE_API_BASE || '/api';
+    setShareLoading(true);
     try {
       const res = await fetch(`${base}/share`, {
         method: 'POST',
@@ -61,10 +66,14 @@ export default function Screen7() {
       const ref = data && data.reference;
       if (ref && ref.text) {
         setSharedCase({ title: ref.title || '同行业案例', text: ref.text });
-        return;
+      } else {
+        setShareMissed(true);
       }
-    } catch { /* 分享失败不影响流程 */ }
-    finishRound();
+    } catch {
+      setShareMissed(true);
+    } finally {
+      setShareLoading(false);
+    }
   };
 
   const pick = (v: EffectResult) => update('effect', v);
@@ -183,6 +192,8 @@ export default function Screen7() {
       {shareOpen && (
         <SharePrompt
           caseRef={sharedCase}
+          loading={shareLoading}
+          missed={shareMissed}
           onAgree={agreeShare}
           onSkip={finishRound}
           onClose={finishRound}
@@ -192,23 +203,35 @@ export default function Screen7() {
   );
 }
 
-function SharePrompt({ caseRef, onAgree, onSkip, onClose }: {
+function SharePrompt({ caseRef, loading, missed, onAgree, onSkip, onClose }: {
   caseRef: { title: string; text: string } | null;
+  loading: boolean;
+  missed: boolean;
   onAgree: () => void; onSkip: () => void; onClose: () => void;
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
-      style={{ background: 'rgba(17,24,39,0.45)', backdropFilter: 'blur(2px)' }}
+      className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center px-4"
+      style={{
+        background: 'rgba(17,24,39,0.45)',
+        backdropFilter: 'blur(2px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+      }}
     >
       <div
         style={{
           background: '#fff', borderRadius: 20, width: '100%', maxWidth: 420,
           boxShadow: '0 20px 60px -20px rgba(0,0,0,0.35)',
+          maxHeight: '78vh', overflowY: 'auto',
         }}
         className="p-5"
       >
-        {caseRef ? (
+        {loading ? (
+          <div className="py-8 flex flex-col items-center gap-2">
+            <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-mint-600 animate-spin" />
+            <span className="text-[13px] text-gray-500">正在找同行业的脱敏案例…</span>
+          </div>
+        ) : caseRef ? (
           <>
             <div className="text-[15px] font-bold text-gray-900">给你一条同行业的脱敏参考案例</div>
             <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 p-3 max-h-56 overflow-y-auto">
@@ -217,6 +240,21 @@ function SharePrompt({ caseRef, onAgree, onSkip, onClose }: {
             </div>
             <p className="mt-2 text-[11px] text-gray-400">
               案例已去掉店名、地址和联系方式，只保留做法与结果。
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ backgroundImage: 'linear-gradient(to bottom right, #1f7a44, #176338)', color: '#fff' }}
+              className="mt-4 w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
+            >
+              继续 →
+            </button>
+          </>
+        ) : missed ? (
+          <>
+            <div className="text-[15px] font-bold text-gray-900">这次暂时没找到同行业的脱敏案例</div>
+            <p className="mt-2 text-[13px] text-gray-600 leading-relaxed">
+              分享已经记下了。你这一行的案例库还在积累，下次再来看看。
             </p>
             <button
               type="button"
