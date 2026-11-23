@@ -224,33 +224,13 @@ async def submit_share(payload: Dict[str, Any]):
             text = text[:cut + 1]
         return text
 
+    # 1) 先做确定性的本地同品类匹配：不依赖 embedding 服务，同样的输入必得同样的结果
     reference = None
     try:
-        import re as _re
-        from pipeline import SessionContext, _retrieve_similar_case
-        ctx = SessionContext(
-            sell_what=record['sell_what'],
-            where_sell=str(p.get('where_sell') or '')[:40],
-            competitors=str(p.get('competitors') or '')[:40],
-            my_difficulty=str(p.get('my_difficulty') or '')[:60],
-        )
-        found = _retrieve_similar_case(ctx)
-        if found and found.get('case_text'):
-            raw = str(found.get('case_text') or '')
-            title = str(found.get('title') or '')
-            # 行业不对就不给，宁缺毋滥
-            if _same_industry(record['sell_what'], title):
-                reference = {'title': (title or '同行业案例')[:40], 'text': _clean(raw)}
-    except Exception as e:
-        print(f'[share] 参考案例检索失败（不影响提交）: {e}')
-
-    # 兜底：直接在本行业案例文件里找，文件名必须命中同品类词，找不到就不硬凑
-    if not reference:
-        try:
-            import re as _re2
-            kb = Path(__file__).parent / 'knowledge' / '案例库'
-            kws = _cat_keywords(record['sell_what']) or list(_grams(record['sell_what']))
-            best, best_score = None, 0
+        kb = Path(__file__).parent / 'knowledge' / '案例库'
+        kws = _cat_keywords(record['sell_what']) or list(_grams(record['sell_what']))
+        best, best_score = None, 0
+        if kws:
             for fp in (sorted(kb.glob('*.md')) if kb.exists() else []):
                 body = fp.read_text(encoding='utf-8', errors='ignore')
                 score = 3 if any(k in fp.stem for k in kws) else 0
@@ -258,12 +238,32 @@ async def submit_share(payload: Dict[str, Any]):
                     score += 1
                 if score > best_score:
                     best, best_score = (fp.stem, body), score
-            if best and best_score >= 1:
-                stem, body = best
-                reference = {'title': stem[:40], 'text': _clean(body)}
-        except Exception as e:
-            print(f'[share] 兜底案例也没找到: {e}')
+        if best and best_score >= 1:
+            reference = {'title': best[0][:40], 'text': _clean(best[1])}
+    except Exception as e:
+        print(f'[share] 本地案例匹配失败: {e}')
 
+    # 2) 本地没有同品类案例时，才走向量检索（会受 embedding 服务波动影响）
+    if not reference:
+        try:
+            from pipeline import SessionContext, _retrieve_similar_case
+            ctx = SessionContext(
+                sell_what=record['sell_what'],
+                where_sell=str(p.get('where_sell') or '')[:40],
+                competitors=str(p.get('competitors') or '')[:40],
+                my_difficulty=str(p.get('my_difficulty') or '')[:60],
+            )
+            found = _retrieve_similar_case(ctx)
+            if found and found.get('case_text'):
+                raw = str(found.get('case_text') or '')
+                title = str(found.get('title') or '')
+                # 行业不对就不给，宁缺毋滥
+                if _same_industry(record['sell_what'], title):
+                    reference = {'title': (title or '同行业案例')[:40], 'text': _clean(raw)}
+        except Exception as e:
+            print(f'[share] 向量检索未命中（不影响提交）: {e}')
+
+    print(f'[share] sell={record["sell_what"]!r} ref={("yes:" + reference["title"]) if reference else "none"}')
     return {'ok': True, 'reference': reference}
 
 
