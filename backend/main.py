@@ -30,7 +30,7 @@ from config import settings
 
 # ============ 启动前：确保向量库存在 ============
 def _ensure_vector_db():
-    """冷启动时若向量库缺失或为空，自动重建。"""
+    """Render 免费层重启后临时文件系统会清空 —— 启动时自动重建向量库。"""
     db_path = Path(settings.VECTOR_DB_PATH)
     if db_path.exists() and db_path.stat().st_size > 1024:
         print(f"[vector] 已存在 ({db_path.stat().st_size} bytes)，跳过重建")
@@ -64,7 +64,9 @@ async def access_guard(request, call_next):
 _origins = list(filter(None, [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    settings.FRONTEND_URL,       # 可选：前后端分开部署时填前端地址
+    settings.FRONTEND_URL,       # Render env 里填前端地址
+    'https://*.netlify.app',
+    'https://*.onrender.com',
 ]))
 print(f"[cors] allowed origins: {_origins}")
 
@@ -138,6 +140,43 @@ async def submit_feedback(payload: Dict[str, Any]):
                 'page': str((payload or {}).get('page') or ''),
             }, ensure_ascii=False) + '\n')
     except Exception as e:  # 磁盘只读等异常不能影响前端
+        return JSONResponse({'ok': False, 'error': str(e)}, status_code=500)
+
+    return {'ok': True}
+
+
+@app.post('/api/share')
+async def submit_share(payload: Dict[str, Any]):
+    """匿名分享：只沉淀诊断结论与方案，不落问卷与对话。"""
+    import json as _json
+    import time as _time
+
+    p = payload or {}
+    jd = p.get('judgment') if isinstance(p.get('judgment'), dict) else {}
+    sol = p.get('solution') if isinstance(p.get('solution'), dict) else {}
+
+    def _cut(v, n: int = 600) -> str:
+        return str(v or '')[:n]
+
+    record = {
+        'ts': _time.time(),
+        'sell_what': _cut(p.get('sell_what'), 60),
+        'effect': _cut(p.get('effect'), 20),
+        'main_problem': _cut(jd.get('mainProblem')),
+        'why': _cut(jd.get('why')),
+        'how_to_fix': _cut(jd.get('howToFix')),
+        'do_what': _cut(sol.get('doWhat')),
+        'cost_and_time': _cut(sol.get('costAndTime')),
+    }
+    if not record['main_problem'] and not record['do_what']:
+        return JSONResponse({'ok': False, 'error': 'empty share'}, status_code=400)
+
+    try:
+        data_dir = Path(__file__).parent / 'data'
+        data_dir.mkdir(parents=True, exist_ok=True)
+        with open(data_dir / 'shares.jsonl', 'a', encoding='utf-8') as f:
+            f.write(_json.dumps(record, ensure_ascii=False) + '\n')
+    except Exception as e:
         return JSONResponse({'ok': False, 'error': str(e)}, status_code=500)
 
     return {'ok': True}

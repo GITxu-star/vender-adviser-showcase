@@ -27,6 +27,34 @@ export default function Screen7() {
     .filter(Boolean);
   const action = (planFromCard.length ? planFromCard : planFromSolution).join('\n') || lastAction || '';
   const [modalOpen, setModalOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [afterShare, setAfterShare] = useState<null | (() => void)>(null);
+
+  // 本轮收尾：先问一次匿名分享，再走原来的去向
+  const finishRound = () => {
+    const cb = afterShare;
+    setAfterShare(null);
+    setShareOpen(false);
+    if (cb) cb();
+  };
+
+  const agreeShare = async () => {
+    const st = useStore.getState();
+    const base = (import.meta as any).env?.VITE_API_BASE || '/api';
+    try {
+      await fetch(`${base}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sell_what: st.screen1.sellWhat,
+          effect: st.effect,
+          judgment: st.judgment,
+          solution: st.solution,
+        }),
+      });
+    } catch { /* 分享失败不影响流程 */ }
+    finishRound();
+  };
 
   const pick = (v: EffectResult) => update('effect', v);
 
@@ -130,11 +158,59 @@ export default function Screen7() {
         open={modalOpen}
         session={useStore.getState()}
         onPrimary={() => {
-          reset();
-          navigate('/screen/1');
+          setModalOpen(false);
+          setAfterShare(() => () => { reset(); navigate('/screen/1'); });
+          setShareOpen(true);
         }}
-        onContinue={continueRound}
+        onContinue={() => {
+          setModalOpen(false);
+          setAfterShare(() => () => continueRound());
+          setShareOpen(true);
+        }}
       />
+
+      {shareOpen && <SharePrompt onAgree={agreeShare} onSkip={finishRound} />}
+    </div>
+  );
+}
+
+function SharePrompt({ onAgree, onSkip }: { onAgree: () => void; onSkip: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+      style={{ background: 'rgba(17,24,39,0.45)', backdropFilter: 'blur(2px)' }}
+    >
+      <div
+        style={{
+          background: '#fff', borderRadius: 20, width: '100%', maxWidth: 420,
+          boxShadow: '0 20px 60px -20px rgba(0,0,0,0.35)',
+        }}
+        className="p-5"
+      >
+        <div className="text-[15px] font-bold text-gray-900">愿意匿名分享这次诊断吗？</div>
+        <p className="mt-2 text-[13px] text-gray-600 leading-relaxed">
+          只提交这次的品类、诊断结论和方案，<b>不含对话记录、不含身份信息</b>，
+          用来积累更多摊位案例。不分享也完全不影响使用。
+        </p>
+        <div className="mt-4 grid gap-2">
+          <button
+            type="button"
+            onClick={onAgree}
+            style={{ backgroundImage: 'linear-gradient(to bottom right, #1f7a44, #176338)', color: '#fff' }}
+            className="w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
+          >
+            愿意匿名分享
+          </button>
+          <button
+            type="button"
+            onClick={onSkip}
+            style={{ background: '#f3f4f6', color: '#4b5563' }}
+            className="w-full py-3 rounded-2xl text-[14px] font-bold active:scale-[0.98] transition"
+          >
+            不用，继续使用
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
