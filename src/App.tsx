@@ -13,6 +13,7 @@ import { useStore } from './store/useStore';
 import AiChat, { triggerAi } from './components/AiChat';
 import AiSheet from './components/AiSheet';
 import { AccessGate } from './components/AccessGate';
+import ErrorBoundary from './components/ErrorBoundary';
 import StepIndicator from './components/StepIndicator';
 
 const SCREEN_MAP: Record<number, React.FC> = {
@@ -139,7 +140,9 @@ function App() {
   return (
     <BrowserRouter>
       <AccessGate>
-        <Shell />
+        <ErrorBoundary>
+          <Shell />
+        </ErrorBoundary>
       </AccessGate>
     </BrowserRouter>
   );
